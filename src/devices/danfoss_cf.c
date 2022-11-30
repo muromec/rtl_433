@@ -2,6 +2,10 @@
 
 /*
 
+Protocol reverse-engineering for Danfoss CF2+ main unit and CF-RD ( 088U0214 )
+
+https://store.danfoss.com/is/en/Climate-Solutions-for-heating/Hydronic-floor-heating/Service-kits-for-hydronic-floor-heatring/Floor-Heating-Controls%2C-Room-Thermostat-CF2%2C-Display/p/088U0214
+
 Packets are manchester encoded with CRC8 as last byte.
 
 All packets start with preamble of long string of 99 followed by 55 AA.
