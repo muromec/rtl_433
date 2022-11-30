@@ -255,6 +255,7 @@ static int danfoss_cf_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned
             "packet_type",      "",             DATA_STRING, type_str,
             "data_type",      "",             DATA_STRING, data_type_str,
             "temp_c",           "",   DATA_COND, temp_c != 0, DATA_INT, temp_c,
+            "mic",              "Integrity",    DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
 
@@ -303,6 +304,7 @@ static char *output_fields[] = {
         "packet_type",
         "data_type",
         "temp_c",
+        "mic",
         NULL,
 };
 
