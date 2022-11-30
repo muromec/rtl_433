@@ -197,37 +197,22 @@ static int danfoss_cf_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned
 
     bitpos = bitbuffer_manchester_decode(bitbuffer, row, bitpos, &packet_bits, 0);
     // smaller than smallest packet
-    fprintf(stderr, "buffer is %d\n", packet_bits.bits_per_row[0] );
-    if (packet_bits.bits_per_row[0] < (8 * 8)) {
+    if (packet_bits.bits_per_row[0] < (8 * 10)) {
       return 0;
     }
 
     b = packet_bits.bb[0];
 
     packet_len = b[7];
-    fprintf(stderr, "len %d, %d\n", (packet_bits.bits_per_row[0] / 8),  b[7]);
-
-
     if (packet_bits.bits_per_row[0] / 8 != b[7]) {
       // packet length doesn't match packet size
       return 0;
     }
 
-    crc = b[packet_len - 1];
-    fprintf(stderr, "CRC %x %x\n", crc8(b, packet_len-1, 1, 0) ^ 0xFF, crc);
-
+    crc = b[packet_len - 1] & 0xFF;
     if ((crc8(b, packet_len-1, 1, 0) ^ 0xFF) != crc) {
-      fprintf(stderr, "CRC mismatch %x %x\n"
-        crc8(b, packet_len-1, 1, 0) ^ 0xFF,
-        crc
-      );
-
-    bitbuffer_print(&packet_bits);
-
       return 0;
     }
-
-    bitbuffer_print(&packet_bits);
 
     net_id = b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3];
     from_addr = b[4];
@@ -268,6 +253,7 @@ static int danfoss_cf_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned
             "from_addr",        "",   DATA_FORMAT, "%02x",     DATA_INT,    from_addr,
             "to_addr",          "",   DATA_FORMAT, "%02x",   DATA_INT,    to_addr,
             "packet_type",      "",             DATA_STRING, type_str,
+            "data_type",      "",             DATA_STRING, data_type_str,
             "temp_c",           "",   DATA_COND, temp_c != 0, DATA_INT, temp_c,
             NULL);
     /* clang-format on */
@@ -301,7 +287,7 @@ static int danfoss_cf_callback(r_device *decoder, bitbuffer_t *bitbuffer)
             bitpos += 6 * 8;
         }
     }
-    if (events == 0 && bitbuffer->bits_per_row[0] > 100) {
+    if (decoder->verbose > 1 && events == 0 && bitbuffer->bits_per_row[0] > 100) {
         fprintf(stderr, "unused packet bitpos %d %d\n", bitpos, bitbuffer->bits_per_row[0]);
         bitbuffer_print(bitbuffer);
     }
@@ -315,11 +301,12 @@ static char *output_fields[] = {
         "from_addr",
         "to_addr",
         "packet_type",
+        "data_type",
         "temp_c",
         NULL,
 };
 
-r_device danfoss_cf = {
+r_device danfoss_cf2 = {
         .name        = "Danfoss CF2 Thermostat",
         .modulation  = FSK_PULSE_PCM,
         .short_width = 52,  // 12-13 samples @250k
